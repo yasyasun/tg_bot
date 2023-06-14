@@ -7,8 +7,9 @@ class UserInputState(StatesGroup):
     Атрибуты заполняются во время опроса пользователя. Очищаются при каждой новой команде.
 
     Attributes:
+        command (str): команда, которую ввёл пользователь.
         city (str): город, в котором ищем отели.
-        city_id (str): id города, в котором ищем отели.
+        city_id (int): id города, в котором ищем отели.
         amount_hotels (int): количество отелей.
         need_photo (bool): нужно ли загружать фото.
         amount_photos (int): количество фото.

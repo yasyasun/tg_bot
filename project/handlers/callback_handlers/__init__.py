@@ -1,1 +1,2 @@
-from . import callback_menu
+from . import choice_city
+from . import need_photo

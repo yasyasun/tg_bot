@@ -25,7 +25,7 @@ def parse_cities(city: str) -> Union[Dict[str, str], None]:
         raise LookupError("Запрос пуст...")
     for place in data['sr']:
         try:
-            possible_cities[place['gaiaId']] = place['regionNames']['fullName']
+            possible_cities[int(place['gaiaId'])] = place['regionNames']['fullName']
         except KeyError:
             continue
     return possible_cities

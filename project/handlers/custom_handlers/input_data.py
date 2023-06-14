@@ -1,12 +1,16 @@
+from typing import Dict
 from loguru import logger
 from telebot.types import Message
-from datetime import datetime
+from datetime import datetime, date
+from telegram_bot_calendar import DetailedTelegramCalendar
 
-from keyboards.inline.buttons_for_cities import print_cities
-from keyboards.reply.photo import about_photo
+from keyboards.inline.create_buttons import print_cities, photo_need_yes_or_no
 from loader import bot
 from states.user_states import UserInputState
 from utils.get_cities import parse_cities
+
+
+LSTEP_RU: Dict[str, str] = {'y': 'год', 'm': 'месяц', 'd': 'день'}
 
 
 @bot.message_handler(commands=['lowprice', 'highprice', 'bestdeal'])
@@ -18,13 +22,15 @@ def low_high_best_handler(message: Message) -> None:
 
     :param message: сообщение Telegram
     """
+    bot.delete_state(message.from_user.id, message.chat.id)  # перед началом опроса зачищаем все собранные состояния
     bot.set_state(message.from_user.id, UserInputState.command, message.chat.id)
     with bot.retrieve_data(message.from_user.id, message.chat.id) as data:
         data['command'] = message.text
         data['date_time'] = datetime.now().strftime('%d.%m.%Y %H:%M:%S')
         data['chat_id'] = message.chat.id
+    print(data)
     bot.set_state(message.from_user.id, UserInputState.city, message.chat.id)
-    bot.send_message(message.from_user.id, 'Введите город поиска\n'
+    bot.send_message(message.from_user.id, 'Введите город поиска\n\n'
                                            '❗Поиск по городам России на данный момент временно не работает.')
 
 
@@ -34,7 +40,6 @@ def input_city(message: Message) -> None:
     """
     Ввод пользователем города и отправка запроса серверу на поиск вариантов городов.
     Возможные варианты городов передаются генератору клавиатуры.
-    Предлагает ввести количество отелей.
 
     :param message: сообщение Telegram
     """
@@ -43,6 +48,7 @@ def input_city(message: Message) -> None:
             data['city'] = message.text
         cities = parse_cities(message.text)
         if cities:
+            bot.set_state(message.from_user.id, UserInputState.amount_hotels, message.chat.id)
             bot.send_message(message.from_user.id, 'Пожалуйста, уточните:', reply_markup=print_cities(cities))
         else:
             bot.send_message(message.from_user.id, '⚠️ Не нахожу такой город. Введите ещё раз.')
@@ -51,9 +57,10 @@ def input_city(message: Message) -> None:
 
 
 @bot.message_handler(state=UserInputState.amount_hotels)
+@logger.catch
 def input_hotels(message: Message) -> None:
     """
-    Ввод количества выдаваемых на странице отелей, а так же проверка, является ли
+    Ввод количества выдаваемых отелей, а так же проверка, является ли
     введённое числом и входит ли оно в заданный диапазон от 1 до 10
 
     :param message: сообщение Telegram
@@ -61,38 +68,36 @@ def input_hotels(message: Message) -> None:
     if message.text.isdigit():
         if 0 < int(message.text) <= 10:
             with bot.retrieve_data(message.from_user.id, message.chat.id) as data:
-                data["amt_hotels"] = message.text
-            bot.set_state(message.from_user.id, UserInputState.need_photo, message.chat.id)
-            bot.send_message(message.from_user.id, "Вам нужны фотографии?", reply_markup=about_photo())
+                data['amount_hotels'] = int(message.text)
+            bot.send_message(message.from_user.id,
+                             'Желаете загрузить фото отелей?',
+                             reply_markup=photo_need_yes_or_no())
         else:
-            bot.send_message(message.chat.id, 'Ошибка! Должно быть число в диапазоне от 1 до 10! Повторите ввод!')
+            bot.send_message(message.from_user.id, '⚠️ Количество отелей должно быть от 1 до 10!\n'
+                                                   'Пожалуйста, повторите ввод.')
     else:
-        bot.send_message(message.from_user.id, "Ошибка! Введите число!")
+        bot.send_message(message.from_user.id, '⚠️ Ошибка!\nВведите число!')
 
 
-@bot.message_handler(state=UserInputState.need_photo)
+@bot.message_handler(state=UserInputState.amount_photos)
+@logger.catch
 def input_photo(message: Message) -> None:
     """
-    Ввод количества фотографий и проверка на число и на соответствие заданному диапазону от 1 до 10.
+    Ввод количества фотографий, проверка на число и на соответствие заданному диапазону от 1 до 10.
 
     :param message: сообщение Telegram
     """
-    if message.text == 'Да':
-        bot.set_state(message.from_user.id, UserInputState.amount_photos, message.chat.id)
-        bot.send_message(message.from_user.id, "Введите количество фотографий")
-    elif message.text == 'Нет':
-        bot.send_message(message.from_user.id, "Спасибо за запрос!")
+    if message.text.isdigit():
+        if 0 < int(message.text) <= 10:
+            with bot.retrieve_data(message.from_user.id, message.chat.id) as data:
+                data['amount_photos'] = int(message.text)
+            calendar, step = DetailedTelegramCalendar(min_date=date.today()).build()
+            bot.send_message(message.chat.id, f"Введите дату заезда", reply_markup=calendar)
+        else:
+            bot.send_message(message.from_user.id, '⚠️ Количество фото должно быть от 1 до 10!\n'
+                                                   'Пожалуйста, повторите ввод')
     else:
-        bot.send_message(message.from_user.id, "Выберите Да или Нет!")
-#
-#
-# @bot.message_handler(state=UserInputState.amt_photos)
-# def get_photos(message: Message) -> None:
-#     if message.text.isdigit():
-#         bot.send_message(message.from_user.id, "Спасибо за запрос!")
-#
-#         with bot.retrieve_data(message.from_user.id, message.chat.id) as data:
-#             data["amt_photos"] = message.text
-#
-#     else:
-#         bot.send_message(message.from_user.id, "Введите число!")
+        bot.send_message(message.from_user.id, '⚠️ Ошибка! Вы ввели не число! Повторите ввод!')
+
+
+

@@ -31,10 +31,6 @@ def api_request(method: str, url: str, querystring: Dict) -> requests.Response:
             url=url,
             params=querystring
         )
-    # if method == "GET":
-    #     response = requests.get("GET", url, params=querystring, headers=headers, timeout=10)
-    # elif method == "POST":
-    #     response = requests.post("POST", url, json=querystring, headers=headers, timeout=10)
 
 
 def get_request(url, params) -> Union[Response, None]:
