@@ -1,1 +1,1 @@
-from . import menu
+from . import buttons_for_menu

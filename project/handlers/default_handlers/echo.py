@@ -8,5 +8,5 @@ from loader import bot
 def bot_echo(message: Message):
     bot.reply_to(
         message, "Нет такой команды.\n" 
-                 "Нажмите /help для выбора действия"
+                 "Нажмите /help для вывода справки"
     )
