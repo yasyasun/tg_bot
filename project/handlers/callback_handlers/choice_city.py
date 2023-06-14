@@ -18,3 +18,6 @@ def city_id_callback(call: CallbackQuery) -> None:
         bot.set_state(call.from_user.id, UserInputState.city_id, call.message.chat.id)
         with bot.retrieve_data(call.from_user.id, call.message.chat.id) as data:
             data['city_id'] = call.data
+        bot.delete_message(call.message.chat.id, call.message.message_id)
+        bot.set_state(call.message.from_user.id, UserInputState.amount_hotels, call.message.chat.id)
+        bot.send_message(call.message.from_user.id, 'Сколько найти отелей?\nНо не более 10!')

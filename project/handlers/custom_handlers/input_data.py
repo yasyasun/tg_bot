@@ -44,9 +44,6 @@ def input_city(message: Message) -> None:
         cities = parse_cities(message.text)
         if cities:
             bot.send_message(message.from_user.id, 'Пожалуйста, уточните:', reply_markup=print_cities(cities))
-            bot.delete_message(message.chat.id, message.message_id)
-            bot.set_state(message.from_user.id, UserInputState.amount_hotels, message.chat.id)
-            bot.send_message(message.from_user.id, 'Сколько найти отелей?\nНо не более 10!')
         else:
             bot.send_message(message.from_user.id, '⚠️ Не нахожу такой город. Введите ещё раз.')
     else:
