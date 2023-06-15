@@ -7,6 +7,7 @@ from telegram_bot_calendar import DetailedTelegramCalendar
 
 from loader import bot
 from states.user_states import UserInputState
+from utils.ready_for_answer import low_high_price_answer
 
 LSTEP_RU: Dict[str, str] = {'y': 'год', 'm': 'месяц', 'd': 'день'}
 
@@ -26,26 +27,27 @@ def date_reply(call: CallbackQuery) -> None:
     :param call: отклик клавиатуры.
     """
 
-    with bot.retrieve_data(call.message.chat.id, call.message.chat.id) as data:
+    with bot.retrieve_data(call.message.chat.id) as data:
         if not data.get('start_date'):
-            result, key, step = DetailedTelegramCalendar(min_date=date.today()).process(call.data)
+            result, key, step = DetailedTelegramCalendar(min_date=date.today(), locale='ru').process(call.data)
         elif not data.get('end_date'):
             new_start_date = data.get('start_date') + timedelta(1)
-            result, key, step = DetailedTelegramCalendar(min_date=new_start_date).process(call.data)
+            result, key, step = DetailedTelegramCalendar(min_date=new_start_date, locale='ru').process(call.data)
 
     if not result and key:
-        bot.edit_message_text("Введите дату", call.message.chat.id, call.message.message_id, reply_markup=key)
+        bot.edit_message_text(f'Выберите {LSTEP_RU[step]}',
+                              call.message.chat.id, call.message.message_id, reply_markup=key)
     elif result:
-        with bot.retrieve_data(call.message.chat.id, call.message.chat.id) as data:
+        with bot.retrieve_data(call.message.chat.id) as data:
             if not data.get('start_date'):
                 data['start_date'] = result
                 calendar, step = DetailedTelegramCalendar(min_date=result + timedelta(1)).build()
-                bot.edit_message_text("Введите дату выезда",
+                bot.edit_message_text('Введите дату выезда',
                                       call.message.chat.id, call.message.message_id, reply_markup=calendar)
             elif not data.get('end_date'):
                 data['end_date'] = result
 
-                bot.edit_message_reply_markup(call.message.chat.id, call.message.message_id, reply_markup=None)
+                bot.delete_message(call.message.chat.id, call.message.message_id)
 
                 if data.get('command') in ('/lowprice', '/highprice'):
                     data_dict = data

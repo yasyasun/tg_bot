@@ -10,9 +10,6 @@ from states.user_states import UserInputState
 from utils.get_cities import parse_cities
 
 
-LSTEP_RU: Dict[str, str] = {'y': 'год', 'm': 'месяц', 'd': 'день'}
-
-
 @bot.message_handler(commands=['lowprice', 'highprice', 'bestdeal'])
 @logger.catch
 def low_high_best_handler(message: Message) -> None:
@@ -28,7 +25,6 @@ def low_high_best_handler(message: Message) -> None:
         data['command'] = message.text
         data['date_time'] = datetime.now().strftime('%d.%m.%Y %H:%M:%S')
         data['chat_id'] = message.chat.id
-    print(data)
     bot.set_state(message.from_user.id, UserInputState.city, message.chat.id)
     bot.send_message(message.from_user.id, 'Введите город поиска\n\n'
                                            '❗Поиск по городам России на данный момент временно не работает.')
@@ -92,7 +88,7 @@ def input_photo(message: Message) -> None:
             with bot.retrieve_data(message.from_user.id, message.chat.id) as data:
                 data['amount_photos'] = int(message.text)
             calendar, step = DetailedTelegramCalendar(min_date=date.today()).build()
-            bot.send_message(message.chat.id, f"Введите дату заезда", reply_markup=calendar)
+            bot.send_message(message.chat.id, 'Введите дату заезда', reply_markup=calendar)
         else:
             bot.send_message(message.from_user.id, '⚠️ Количество фото должно быть от 1 до 10!\n'
                                                    'Пожалуйста, повторите ввод')

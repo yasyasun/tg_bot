@@ -8,8 +8,6 @@ from loader import bot
 from telebot.types import CallbackQuery
 from states.user_states import UserInputState
 
-LSTEP_RU: Dict[str, str] = {'y': 'год', 'm': 'месяц', 'd': 'день'}
-
 
 @bot.callback_query_handler(func=lambda call: call.data == 'yes' or call.data == 'no')
 @logger.catch
@@ -34,6 +32,6 @@ def need_photo_callback(call: CallbackQuery) -> None:
             data['amount_photos'] = 0
         bot.delete_message(call.message.chat.id, call.message.message_id)
         calendar, step = DetailedTelegramCalendar(min_date=date.today()).build()
-        bot.send_message(call.message.chat.id, f"Введите дату заезда", reply_markup=calendar)
+        bot.send_message(call.message.chat.id, 'Введите дату заезда', reply_markup=calendar)
     else:
         bot.send_message(call.message.chat.id, text='⚠️ Нажмите кнопку "Да" или "Нет"')
