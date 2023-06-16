@@ -7,7 +7,7 @@ from telegram_bot_calendar import DetailedTelegramCalendar
 
 from loader import bot
 from states.user_states import UserInputState
-from utils.ready_for_answer import low_high_price_answer
+from utils.print_data import print_data_from_user
 
 LSTEP_RU: Dict[str, str] = {'y': 'год', 'm': 'месяц', 'd': 'день'}
 
@@ -20,7 +20,7 @@ def date_reply(call: CallbackQuery) -> None:
     Проверяет, записаны ли состояния 'start_date' и 'end_date'.
     Если нет - снова предлагает выбрать дату и записывает эти состояния.
     Если да, то проверяет состояние пользователя 'last_command'.
-    Если 'last_command' == 'lowprice' или 'highprice' - завершает опрос и
+    Если 'command' == '/lowprice' или '/highprice' - завершает опрос и
     вызывает функцию для подготовки ответа на запрос пользователя. Затем ожидает ввода следующей команды.
     Иначе продолжает опрос и предлагает ввести минимальную цену за ночь.
 
@@ -41,17 +41,20 @@ def date_reply(call: CallbackQuery) -> None:
         with bot.retrieve_data(call.message.chat.id) as data:
             if not data.get('start_date'):
                 data['start_date'] = result
+                data['start_year'], data['start_month'], data['start_day'] = str(result).split('-')
                 calendar, step = DetailedTelegramCalendar(min_date=result + timedelta(1)).build()
                 bot.edit_message_text('Введите дату выезда',
                                       call.message.chat.id, call.message.message_id, reply_markup=calendar)
             elif not data.get('end_date'):
                 data['end_date'] = result
+                data['end_year'], data['end_month'], data['end_day'] = str(result).split('-')
 
                 bot.delete_message(call.message.chat.id, call.message.message_id)
 
                 if data.get('command') in ('/lowprice', '/highprice'):
-                    data_dict = data
-                    low_high_price_answer(call.message, data_dict, call.from_user.username)
+                    data_from_user = data
+                    print_data_from_user(call.message, data_from_user)
+                    bot.set_state(call.message.chat.id, state=None)
                     bot.send_message(call.message.chat.id,
                                      f"😉👌 Можете ввести другую команду!\n"
                                      f"Например: <b>/help</b>", parse_mode="html")

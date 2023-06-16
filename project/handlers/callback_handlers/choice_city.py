@@ -12,7 +12,7 @@ def city_id_callback(call: CallbackQuery) -> None:
     Пользователь нажал кнопку города, который ему нужен.
     Записываем id этого города.
 
-    :param call: отклик клавиатуры, получает id города
+    :param call: отклик клавиатуры, получает id города.
     """
     if call.data:
         with bot.retrieve_data(call.message.chat.id) as data:

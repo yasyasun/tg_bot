@@ -22,7 +22,7 @@ class User(BaseModel):
 
     class Meta:
         db_table = 'users'
-        order_by = ['pk']
+        order_by = 'id'
 
 
 class History(BaseModel):
@@ -31,19 +31,18 @@ class History(BaseModel):
 
     Attributes:
         date (datetime.date): дата запроса пользователя.
-        command (str): команда запроса ('lowprice', 'highprice', 'bestdeal').
+        command (str): команда запроса ('/lowprice', '/highprice', '/bestdeal').
         city (str): город.
         start_date (datetime.date): дата заселения в отель.
         end_date (datetime.date): дата выселения из отеля.
         from_user (str): name - уникальное имя пользователя из таблицы 'users' для связки таблиц.
     """
-
     date = DateField()
     command = CharField()
     city = CharField()
     start_date = DateField()
     end_date = DateField()
-    from_user = ForeignKeyField(User.name)
+    from_user = ForeignKeyField(User.name, backref='history')
 
     class Meta:
         db_table = 'histories'
@@ -57,23 +56,20 @@ class SearchResult(BaseModel):
     Attributes:
         hotel_id (int): id отеля.
         hotel_name (str): название отеля.
+        amount_nights (int): количество ночей.
         price_per_night (float): цена за 1 ночь в $.
         total_price (float): итоговая стоимость за N ночей в $.
         distance_city_center (float): расстояние до центра города.
-        hotel_url (str): url-адрес отеля.
-        hotel_neighbourhood (str): район расположения отеля.
-        amount_nights (int): количество ночей.
+        hotel_address (str): адрес отеля.
         from_date (datetime.date): date - уникальная дата запроса из таблицы 'histories' для связки таблиц.
     """
-
     hotel_id = IntegerField()
     hotel_name = CharField()
+    amount_nights = IntegerField()
     price_per_night = DecimalField(decimal_places=1)
     total_price = DecimalField(decimal_places=1)
     distance_city_center = FloatField()
-    hotel_url = CharField()
-    hotel_neighbourhood = CharField()
-    amount_nights = IntegerField()
+    hotel_address = CharField()
     from_date = ForeignKeyField(History.date)
 
     class Meta:

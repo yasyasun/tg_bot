@@ -6,7 +6,7 @@ from loader import bot
 
 
 @logger.catch
-def print_cities(cities_dict: Dict[str, str]) -> InlineKeyboardMarkup:
+def print_cities(cities_dict: Dict[int, str]) -> InlineKeyboardMarkup:
     """
     Клавиатура с кнопками - выбор подходящего по названию города, из которых пользователь выбирает нужный ему.
 

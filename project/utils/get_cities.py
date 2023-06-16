@@ -5,13 +5,13 @@ from loguru import logger
 
 
 @logger.catch
-def parse_cities(city: str) -> Union[Dict[str, str], None]:
+def parse_cities(city: str) -> Union[Dict[int, str], None]:
     """
     Функция делает запрос в api_request и десериализирует результат. Если запрос получен и десериализация прошла -
     возвращает обработанный результат в виде словаря - подходящие города и их id, иначе None.
 
     :param city: город для поиска.
-    :return: None или словарь с результатом: {'city_id': 'city_name'}
+    :return: None или словарь с результатом: {'city_id': 'city_name'}.
     """
     querystring = {"q": city, "locale": "ru_RU"}
     response = api_request(
