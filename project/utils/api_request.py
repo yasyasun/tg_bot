@@ -49,7 +49,6 @@ def get_request(url, params) -> Union[Response, None]:
             params=params,
             timeout=15
         )
-        print(response.status_code)
         if response.status_code == requests.codes.ok:
             return response
     except Exception:
@@ -72,7 +71,6 @@ def post_request(url, params) -> Union[Response, None]:
             json=params,
             timeout=15
         )
-        print(response.status_code)
         if response.status_code == requests.codes.ok:
             return response
     except Exception:

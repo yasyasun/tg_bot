@@ -17,7 +17,7 @@ class User(BaseModel):
     Attributes:
         name (str): уникальное имя пользователя (сюда запишется username пользователя Telegram).
     """
-
+    id = PrimaryKeyField(unique=True)
     name = CharField(unique=True)
 
     class Meta:
@@ -42,7 +42,7 @@ class History(BaseModel):
     city = CharField()
     start_date = DateField()
     end_date = DateField()
-    from_user = ForeignKeyField(User.name, backref='history')
+    from_user = ForeignKeyField(User.name)
 
     class Meta:
         db_table = 'histories'
