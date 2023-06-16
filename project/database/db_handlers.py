@@ -62,8 +62,8 @@ def save_results(data_hotel: Dict, data_request: Dict, amount_nights: int) -> No
             total_price=data_hotel['price'] * amount_nights,
             distance_city_center=data_hotel['distance'],
             hotel_address=data_hotel['address'],
-            from_date=History.select().where(
-                History.from_user == User.get(User.name == data_request['user']) and
+            from_date=History.select('id').where(
+                History.from_user == User.select('id').where(User.name == data_request['user']) and
                 History.date == data_request['date_time']
             )
         ).save()

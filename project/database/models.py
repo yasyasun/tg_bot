@@ -42,7 +42,7 @@ class History(BaseModel):
     city = CharField()
     start_date = DateField()
     end_date = DateField()
-    from_user = ForeignKeyField(User.name)
+    from_user = ForeignKeyField(User, backref='history')
 
     class Meta:
         db_table = 'histories'
@@ -70,7 +70,7 @@ class SearchResult(BaseModel):
     total_price = DecimalField(decimal_places=1)
     distance_city_center = FloatField()
     hotel_address = CharField()
-    from_date = ForeignKeyField(History.date)
+    from_date = ForeignKeyField(History, backref='result')
 
     class Meta:
         db_table = 'results'

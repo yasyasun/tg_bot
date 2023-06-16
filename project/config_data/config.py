@@ -1,4 +1,6 @@
 import os
+from pathlib import Path
+
 from dotenv import load_dotenv, find_dotenv
 
 if not find_dotenv():
@@ -16,4 +18,6 @@ DEFAULT_COMMANDS = (
     ('history', "История поиска отелей"),
 )
 
-LOG_PATH = os.path.abspath(os.path.join('logs', 'debug.log'))
+BASE_DIR = Path(__file__).resolve().parent.parent
+DATABASE_PATH = BASE_DIR / 'database' / 'search_history.db'
+LOG_PATH = BASE_DIR / 'logs' / 'debug.log'
