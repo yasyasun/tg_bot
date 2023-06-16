@@ -1,6 +1,8 @@
 from peewee import *
 
-db = SqliteDatabase('search_history.db')
+from config_data.config import DATABASE_PATH
+
+db = SqliteDatabase(DATABASE_PATH)
 
 
 class BaseModel(Model):
