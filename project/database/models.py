@@ -17,6 +17,7 @@ class User(BaseModel):
     Класс для создания таблицы 'users' в БД.
 
     Attributes:
+        id (int): уникальный id пользователя.
         name (str): уникальное имя пользователя (сюда запишется username пользователя Telegram).
     """
     id = PrimaryKeyField(unique=True)
@@ -32,6 +33,7 @@ class History(BaseModel):
     Класс для создания таблицы 'histories' в БД.
 
     Attributes:
+        id (int): уникальный id истории.
         date (datetime.date): дата запроса пользователя.
         command (str): команда запроса ('/lowprice', '/highprice', '/bestdeal').
         city (str): город.
@@ -39,6 +41,7 @@ class History(BaseModel):
         end_date (datetime.date): дата выселения из отеля.
         from_user (str): name - уникальное имя пользователя из таблицы 'users' для связки таблиц.
     """
+    id = PrimaryKeyField(unique=True)
     date = DateField()
     command = CharField()
     city = CharField()
@@ -63,6 +66,8 @@ class SearchResult(BaseModel):
         total_price (float): итоговая стоимость за N ночей в $.
         distance_city_center (float): расстояние до центра города.
         hotel_address (str): адрес отеля.
+        need_photo (bool): нужно ли загружать фото (True или False).
+        images (str): адреса фото, если нужны.
         from_date (datetime.date): date - уникальная дата запроса из таблицы 'histories' для связки таблиц.
     """
     hotel_id = IntegerField()
@@ -72,6 +77,8 @@ class SearchResult(BaseModel):
     total_price = DecimalField(decimal_places=1)
     distance_city_center = FloatField()
     hotel_address = CharField()
+    need_photo = BooleanField()
+    images = CharField(default='')
     from_date = ForeignKeyField(History, backref='result')
 
     class Meta:

@@ -1,10 +1,9 @@
-from typing import Dict
 from loguru import logger
 from telebot.types import Message
 from datetime import datetime, date
 from telegram_bot_calendar import DetailedTelegramCalendar
 
-from database.db_handlers import save_user
+from database.db_handlers import save_user, save_history
 from keyboards.inline.create_buttons import print_cities, photo_need_yes_or_no
 from loader import bot
 from states.user_states import UserInputState
@@ -185,6 +184,7 @@ def input_end_distance(message: Message) -> None:
         if message.text > 0:
             with bot.retrieve_data(message.from_user.id, message.chat.id) as data:
                 data['end_distance'] = message.text
+                save_history(data)
                 data_from_user = data
                 print_data_from_user(message, data_from_user)
                 bot.set_state(message.chat.id, state=None)

@@ -4,6 +4,8 @@ from loguru import logger
 from telebot.types import Message
 
 from database.models import db, User, History, SearchResult
+from keyboards.inline.create_buttons import print_histories
+from loader import bot
 
 
 @logger.catch
@@ -33,13 +35,17 @@ def save_history(data: Dict) -> None:
     :param data: словарь со всеми данными запроса.
     """
     with db:
+        user = (User
+                .select()
+                .where(User.name == data['user'])
+                )
         History(
             date=data['date_time'],
             command=data['command'],
             city=data['city'],
-            start_date=data['start_date'],
-            end_date=data['end_date'],
-            from_user=User.select('id').where(User.name == data['user'])
+            start_date=f"{data['start_day']}-{data['start_month']}-{data['start_year']}",
+            end_date=f"{data['end_day']}-{data['end_month']}-{data['end_year']}",
+            from_user=user.id
         ).save()
 
 
@@ -54,6 +60,16 @@ def save_results(data_hotel: Dict, data_request: Dict, amount_nights: int) -> No
     :param amount_nights: количество ночей.
     """
     with db:
+        user = (User
+                .select()
+                .where(User.name == data_request['user'])
+                )
+        history = (History
+                   .select()
+                   .where(History.date == data_request['date_time'] and
+                          History.from_user == user.id)
+                   .get()
+                   )
         SearchResult(
             hotel_id=data_hotel['id'],
             hotel_name=data_hotel['name'],
@@ -62,8 +78,54 @@ def save_results(data_hotel: Dict, data_request: Dict, amount_nights: int) -> No
             total_price=data_hotel['price'] * amount_nights,
             distance_city_center=data_hotel['distance'],
             hotel_address=data_hotel['address'],
-            from_date=History.select('id').where(
-                History.from_user == User.select('id').where(User.name == data_request['user']) and
-                History.date == data_request['date_time']
-            )
+            need_photo=data_hotel['need_photo'],
+            images=data_hotel['images'],
+            from_date=history.id
         ).save()
+
+
+@logger.catch
+def show_history(message: Message, user: str) -> None:
+    """
+    Функция вывода истории поиска пользователя.
+    Предлагает пользователю инлайн-клавиатуру с его прошлыми запросами из таблицы 'histories'.
+
+    :param message: сообщение.
+    :param user: имя пользователя Telegram (username).
+    """
+    with db:
+        user = (User
+                .select()
+                .where(User.name == user)
+                )
+        histories = [history for history in History.select().where(History.from_user == user.id)]
+        if histories:
+            bot.send_message(message.chat.id, text='Ваши прошлые запросы, выбирайте:',
+                             reply_markup=print_histories(histories))
+        else:
+            bot.send_message(message.chat.id,
+                             f"<b>Ваша история пуста!</b>\nВведите какую-нибудь команду!\n"
+                             f"Например: <b>/help</b>", parse_mode="html")
+
+
+@logger.catch
+def delete_history(message: Message, user: str) -> None:
+    """
+    Функция очистки истории поиска пользователя.
+
+    :param message: сообщение
+    :param user: имя пользователя Telegram (username)
+    """
+    with db:
+        user = (User
+                .select()
+                .where(User.name == user)
+                )
+        for history in History.select().where(History.from_user == user.id):
+            history_date = History.get(History.date == history.date)
+            SearchResult.delete().where(SearchResult.from_date == history_date).execute()
+            History.delete_instance(history)
+    bot.send_message(message.chat.id,
+                     f"👍 <b>История поиска очищена!</b>\n"
+                     f"Введите команду!\n"
+                     f"Например: <b>/help</b>", parse_mode="html")

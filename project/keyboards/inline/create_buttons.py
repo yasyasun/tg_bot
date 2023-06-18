@@ -1,8 +1,9 @@
-from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton, Message
-from typing import Dict
+from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
+from typing import Dict, List
 from loguru import logger
 
-from loader import bot
+from database.models import History
+from utils.factories import for_history
 
 
 @logger.catch
@@ -33,3 +34,34 @@ def photo_need_yes_or_no() -> InlineKeyboardMarkup:
         InlineKeyboardButton(text='НЕТ', callback_data='no')
     )
     return keyboard_yes_no
+
+
+@logger.catch
+def get_history_action() -> InlineKeyboardMarkup:
+    """
+    Клавиатура с кнопками - выбор действия с историей поиска.
+
+    :return: клавиатура InlineKeyboardMarkup
+    """
+    keyboard = InlineKeyboardMarkup(row_width=1)
+    keyboard.add(
+        InlineKeyboardButton(text='Показать историю поиска', callback_data='show_history'),
+        InlineKeyboardButton(text='Очистить историю', callback_data='delete_history')
+    )
+    return keyboard
+
+
+@logger.catch
+def print_histories(histories_list: List[History]) -> InlineKeyboardMarkup:
+    """
+    Клавиатура с кнопками с историей поиска.
+    Каждая кнопка: "дата запроса — тип запроса — город поиска".
+
+    :param histories_list: список с историями поиска пользователя. Каждая история - объект класса History.
+    :return: клавиатура InlineKeyboardMarkup.
+    """
+    keyboard = InlineKeyboardMarkup(row_width=1)
+    for history in histories_list:
+        text = f'{history.date} — {history.command} — {history.city}'
+        keyboard.add(InlineKeyboardButton(text=text, callback_data=for_history.new(history_id=history.id)))
+    return keyboard
