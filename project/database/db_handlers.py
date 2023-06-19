@@ -84,17 +84,19 @@ def save_results(data_hotel: Dict, data_request: Dict, amount_nights: int) -> No
 
 
 @logger.catch
-def show_history(user: str) -> Union[List, None]:
+def show_history(username: str) -> Union[List, None]:
     """
     Функция вывода истории поиска пользователя.
+    Проверяет наличие истории поиска в БД.
 
-    :param user: имя пользователя Telegram (username).
+
+    :param username: имя пользователя Telegram (username).
     :return: список с запросами поиска пользователя или None
     """
     with db:
         user = (User
                 .select()
-                .where(User.name == user)
+                .where(User.name == username)
                 )
         histories = [history for history in History.select().where(History.from_user == user.id)]
         if histories:
