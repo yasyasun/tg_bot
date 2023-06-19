@@ -55,7 +55,7 @@ def get_history_action() -> InlineKeyboardMarkup:
 def print_histories(histories_list: List[History]) -> InlineKeyboardMarkup:
     """
     Клавиатура с кнопками с историей поиска.
-    Каждая кнопка: "дата запроса — тип запроса — город поиска".
+    Каждая кнопка: "дата запроса — название команды — город поиска".
 
     :param histories_list: список с историями поиска пользователя. Каждая история - объект класса History.
     :return: клавиатура InlineKeyboardMarkup.

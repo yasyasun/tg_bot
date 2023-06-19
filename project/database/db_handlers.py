@@ -1,10 +1,9 @@
-from typing import Dict
+from typing import Dict, Union, List
 
 from loguru import logger
 from telebot.types import Message
 
 from database.models import db, User, History, SearchResult
-from keyboards.inline.create_buttons import print_histories
 from loader import bot
 
 
@@ -85,13 +84,12 @@ def save_results(data_hotel: Dict, data_request: Dict, amount_nights: int) -> No
 
 
 @logger.catch
-def show_history(message: Message, user: str) -> None:
+def show_history(user: str) -> Union[List, None]:
     """
     Функция вывода истории поиска пользователя.
-    Предлагает пользователю инлайн-клавиатуру с его прошлыми запросами из таблицы 'histories'.
 
-    :param message: сообщение.
     :param user: имя пользователя Telegram (username).
+    :return: список с запросами поиска пользователя или None
     """
     with db:
         user = (User
@@ -100,12 +98,9 @@ def show_history(message: Message, user: str) -> None:
                 )
         histories = [history for history in History.select().where(History.from_user == user.id)]
         if histories:
-            bot.send_message(message.chat.id, text='Ваши прошлые запросы, выбирайте:',
-                             reply_markup=print_histories(histories))
+            return histories
         else:
-            bot.send_message(message.chat.id,
-                             f"<b>Ваша история пуста!</b>\nВведите какую-нибудь команду!\n"
-                             f"Например: <b>/help</b>", parse_mode="html")
+            return None
 
 
 @logger.catch

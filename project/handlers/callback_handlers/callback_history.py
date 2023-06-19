@@ -5,6 +5,7 @@ from telebot.types import CallbackQuery, InputMediaPhoto
 
 from database.db_handlers import show_history, delete_history
 from database.models import db, SearchResult
+from keyboards.inline.create_buttons import print_histories
 from loader import bot
 from utils.factories import for_history
 from utils.get_hotels import print_hotel_info
@@ -23,7 +24,14 @@ def process_history_reply(call: CallbackQuery) -> None:
     bot.delete_message(call.message.chat.id, call.message.message_id)
     if call.data == "show_history":
         try:
-            show_history(call.message, user=call.from_user.username)
+            user_histories = show_history(user=call.from_user.username)
+            if user_histories:
+                bot.send_message(call.message.chat.id, text='Ваши прошлые запросы, выбирайте:',
+                                 reply_markup=print_histories(user_histories))
+            else:
+                bot.send_message(call.message.chat.id,
+                                 f"<b>Ваша история пуста!</b>\nВведите какую-нибудь команду!\n"
+                                 f"Например: <b>/help</b>", parse_mode="html")
         except Exception:
             bot.send_message(call.message.chat.id, text='⚠️Упс... ошибка: не могу загрузить историю поиска:')
     elif call.data == "delete_history":
