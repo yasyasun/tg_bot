@@ -5,7 +5,6 @@ from loguru import logger
 from telebot.types import CallbackQuery
 from telegram_bot_calendar import DetailedTelegramCalendar
 
-from database.db_handlers import save_history
 from loader import bot
 from states.user_states import UserInputState
 from utils.print_data import print_data_from_user
@@ -54,7 +53,6 @@ def date_reply(call: CallbackQuery) -> None:
 
                 if data.get('command') in ('/lowprice', '/highprice'):
                     data_from_user = data
-                    save_history(data_from_user)
                     print_data_from_user(call.message, data_from_user)
                     bot.set_state(call.message.chat.id, state=None)
                     bot.send_message(call.message.chat.id,
