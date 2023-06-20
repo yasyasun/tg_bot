@@ -126,6 +126,7 @@ def parse_and_print_hotels(message: Message, data_from_user: Dict) -> None:
                     }
             else:
                 bot.send_message(message.chat.id, 'По вашему запросу ничего не найдено😔')
+        save_history(data_from_user)
         count = 0
         for key, hotel in hotels_data.items():
             # Нужен дополнительный запрос, чтобы получить детальную информацию об отеле.
@@ -155,7 +156,6 @@ def parse_and_print_hotels(message: Message, data_from_user: Dict) -> None:
                 }
                 amount_nights = int((data_from_user['end_date'] - data_from_user['start_date']).total_seconds() / 86400)
                 hotel_info = print_hotel_info(details_hotel_data, amount_nights)
-                save_history(data_from_user)
                 save_results(details_hotel_data, data_from_user, amount_nights)
                 if data_from_user['need_photo']:
                     # сформируем рандомный список из ссылок на фотографии, т.к. фото много, а надо только 10
