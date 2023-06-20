@@ -5,7 +5,7 @@ from typing import Dict
 from loguru import logger
 from telebot.types import Message, InputMediaPhoto
 
-from database.db_handlers import save_results
+from database.db_handlers import save_results, save_images
 from loader import bot
 from utils.api_request import api_request
 
@@ -145,12 +145,14 @@ def parse_and_print_hotels(message: Message, data_from_user: Dict) -> None:
                 'price': hotels_data[key]['price'],
                 'distance': hotels_data[key]['distance'],
                 'address': details_hotel['data']['propertyInfo']['summary']['location']['address']['addressLine'],
+                'need_photo': data_from_user['need_photo'],
                 'images': [
                     url['image']['url'] for url in details_hotel['data']['propertyInfo']['propertyGallery']['images']
                 ]
             }
             amount_nights = int((data_from_user['end_date'] - data_from_user['start_date']).total_seconds() / 86400)
             hotel_info = print_hotel_info(details_hotel_data, amount_nights)
+            save_results(details_hotel_data, data_from_user, amount_nights)
             if data_from_user['need_photo']:
                 # сформируем рандомный список из ссылок на фотографии, т.к. фото много, а надо только 10
                 try:
@@ -158,7 +160,8 @@ def parse_and_print_hotels(message: Message, data_from_user: Dict) -> None:
                         details_hotel_data['images'][random.randint(0, len(details_hotel_data['images']) - 1)]
                         for _ in range(data_from_user['amount_photos'])
                     ]
-                    details_hotel_data['images'] = images_urls
+                    for image_url in images_urls:
+                        save_images(image_url, details_hotel_data['id'])
                 except IndexError:
                     continue
                 if images_urls:
@@ -167,11 +170,9 @@ def parse_and_print_hotels(message: Message, data_from_user: Dict) -> None:
                         InputMediaPhoto(media=url, caption=hotel_info) if index == 0 else InputMediaPhoto(media=url)
                         for index, url in enumerate(images_urls)
                     ]
-                    save_results(details_hotel_data, data_from_user, amount_nights)
                     bot.send_media_group(message.chat.id, images)
             else:
                 # если фото не нужны, то просто выводим данные об отеле
-                save_results(details_hotel_data, data_from_user, amount_nights)
                 bot.send_message(message.chat.id, hotel_info)
         else:
             break

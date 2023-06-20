@@ -26,7 +26,7 @@ def low_high_best_handler(message: Message) -> None:
     with bot.retrieve_data(message.from_user.id, message.chat.id) as data:
         data.clear()
         data['command'] = message.text
-        data['date_time'] = datetime.now().strftime('%d.%m.%Y %H:%M:%S')
+        data['date_time'] = datetime.now().strftime('%d-%m-%Y %H:%M:%S')
         data['user'] = message.from_user.username
     bot.set_state(message.from_user.id, UserInputState.city, message.chat.id)
     bot.send_message(message.from_user.id, 'Введите город поиска\n\n'
@@ -184,9 +184,9 @@ def input_end_distance(message: Message) -> None:
         if message.text > 0:
             with bot.retrieve_data(message.from_user.id, message.chat.id) as data:
                 data['end_distance'] = message.text
-                save_history(data)
                 data_from_user = data
                 print_data_from_user(message, data_from_user)
+                save_history(data_from_user)
                 bot.set_state(message.chat.id, state=None)
                 bot.send_message(message.chat.id, f"😉👌 Можете ввести другую команду!\n"
                                                   f"Например: <b>/help</b>", parse_mode="html")

@@ -2,7 +2,7 @@ from peewee import *
 
 from config_data.config import DATABASE_PATH
 
-db = SqliteDatabase(DATABASE_PATH)
+db = SqliteDatabase(DATABASE_PATH, pragmas={'foreign_keys': 1})
 
 
 class BaseModel(Model):
@@ -39,7 +39,7 @@ class History(BaseModel):
         city (str): город.
         start_date (datetime.date): дата заселения в отель.
         end_date (datetime.date): дата выселения из отеля.
-        from_user (str): name - уникальное имя пользователя из таблицы 'users' для связки таблиц.
+        from_user (int): уникальное id пользователя из таблицы 'users' для связки таблиц.
     """
     id = PrimaryKeyField(unique=True)
     date = DateField()
@@ -47,7 +47,7 @@ class History(BaseModel):
     city = CharField()
     start_date = DateField()
     end_date = DateField()
-    from_user = ForeignKeyField(User, backref='history')
+    from_user = ForeignKeyField(User)
 
     class Meta:
         db_table = 'histories'
@@ -59,28 +59,43 @@ class SearchResult(BaseModel):
     Класс для создания таблицы 'results' в БД.
 
     Attributes:
+        id (int): уникальный id результата.
         hotel_id (int): id отеля.
-        hotel_name (str): название отеля.
+        name (str): название отеля.
         amount_nights (int): количество ночей.
-        price_per_night (float): цена за 1 ночь в $.
+        price (float): цена за 1 ночь в $.
         total_price (float): итоговая стоимость за N ночей в $.
-        distance_city_center (float): расстояние до центра города.
-        hotel_address (str): адрес отеля.
+        distance (float): расстояние до центра города.
+        address (str): адрес отеля.
         need_photo (bool): нужно ли загружать фото (True или False).
-        images (str): адреса фото, если нужны.
-        from_date (datetime.date): date - уникальная дата запроса из таблицы 'histories' для связки таблиц.
+        from_history (int): уникальное id истории из таблицы 'histories' для связки таблиц.
     """
+    id = PrimaryKeyField(unique=True)
     hotel_id = IntegerField()
-    hotel_name = CharField()
+    name = CharField()
     amount_nights = IntegerField()
-    price_per_night = DecimalField(decimal_places=1)
-    total_price = DecimalField(decimal_places=1)
-    distance_city_center = FloatField()
-    hotel_address = CharField()
+    price = DecimalField(decimal_places=2, auto_round=True)
+    total_price = DecimalField(decimal_places=2, auto_round=True)
+    distance = FloatField()
+    address = CharField()
     need_photo = BooleanField()
-    images = CharField(default='')
-    from_date = ForeignKeyField(History, backref='result')
+    from_history = ForeignKeyField(History, on_delete='CASCADE')
 
     class Meta:
         db_table = 'results'
         order_by = 'price_per_night'
+
+
+class Images(BaseModel):
+    """
+    Класс для создания таблицы 'images' в БД, если нужны пользователю.
+
+    Attributes:
+        url (str): адрес фото.
+        from_result (int): уникальное id отеля из таблицы 'results' для связки таблиц
+    """
+    url = CharField()
+    from_result = ForeignKeyField(SearchResult, on_delete='CASCADE')
+
+    class Meta:
+        db_table = 'images'

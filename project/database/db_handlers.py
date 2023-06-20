@@ -3,7 +3,7 @@ from typing import Dict, Union, List
 from loguru import logger
 from telebot.types import Message
 
-from database.models import db, User, History, SearchResult
+from database.models import db, User, History, SearchResult, Images
 from loader import bot
 
 
@@ -37,6 +37,7 @@ def save_history(data: Dict) -> None:
         user = (User
                 .select()
                 .where(User.name == data['user'])
+                .get()
                 )
         History(
             date=data['date_time'],
@@ -62,24 +63,44 @@ def save_results(data_hotel: Dict, data_request: Dict, amount_nights: int) -> No
         user = (User
                 .select()
                 .where(User.name == data_request['user'])
+                .get()
                 )
         history = (History
                    .select()
-                   .where(History.date == data_request['date_time'] and
-                          History.from_user == user.id)
+                   .where(History.from_user == user.id and History.date == data_request['date_time'])
                    .get()
                    )
         SearchResult(
             hotel_id=data_hotel['id'],
-            hotel_name=data_hotel['name'],
+            name=data_hotel['name'],
             amount_nights=amount_nights,
-            price_per_night=data_hotel['price'],
+            price=data_hotel['price'],
             total_price=data_hotel['price'] * amount_nights,
-            distance_city_center=data_hotel['distance'],
-            hotel_address=data_hotel['address'],
+            distance=data_hotel['distance'],
+            address=data_hotel['address'],
             need_photo=data_hotel['need_photo'],
-            images=data_hotel['images'],
-            from_date=history.id
+            from_history=history.id
+        ).save()
+
+
+@logger.catch
+def save_images(url: str, id_hotel: int):
+    """
+    Функция для сохранения фотографий отеля в БД.
+    Забирает данные и сохраняет в таблицу 'images'.
+
+    :param url: словарь с информацией по отелю.
+    :param id_hotel: словарь со всеми данными запроса.
+    """
+    with db:
+        result = (SearchResult
+                  .select()
+                  .where(SearchResult.hotel_id == id_hotel)
+                  .get()
+                  )
+        Images(
+            url=url,
+            from_result=result.id
         ).save()
 
 
@@ -97,6 +118,7 @@ def show_history(username: str) -> Union[List, None]:
         user = (User
                 .select()
                 .where(User.name == username)
+                .get()
                 )
         histories = [history for history in History.select().where(History.from_user == user.id)]
         if histories:
@@ -106,21 +128,20 @@ def show_history(username: str) -> Union[List, None]:
 
 
 @logger.catch
-def delete_history(message: Message, user: str) -> None:
+def delete_history(message: Message, username: str) -> None:
     """
     Функция очистки истории поиска пользователя.
 
     :param message: сообщение
-    :param user: имя пользователя Telegram (username)
+    :param username: имя пользователя Telegram (username)
     """
     with db:
         user = (User
                 .select()
-                .where(User.name == user)
+                .where(User.name == username)
+                .get()
                 )
         for history in History.select().where(History.from_user == user.id):
-            history_date = History.get(History.date == history.date)
-            SearchResult.delete().where(SearchResult.from_date == history_date).execute()
             History.delete_instance(history)
     bot.send_message(message.chat.id,
                      f"👍 <b>История поиска очищена!</b>\n"
